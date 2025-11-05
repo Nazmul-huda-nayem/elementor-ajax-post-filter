@@ -208,93 +208,91 @@
             });
         }
 
-        loadPosts() {
-            const self = this;
-            
-            console.log('EPF: Loading posts with filters', this.filters);
-            
-            // Show loading
-            this.$loading.fadeIn(200);
+       loadPosts() {
+    const self = this;
+    
+    console.log('EPF: Loading posts with filters', this.filters);
+    
+    // Show loading
+    this.$loading.fadeIn(200);
 
-            // Get settings from container
-            const postType = this.$container.data('post-type') || 'post';
-            const postsPerPage = this.$container.data('posts-per-page') || 6;
-            const layout = this.$container.data('layout') || 'grid';
-            const columns = this.$container.data('columns') || 3;
-            const paginationType = this.$container.data('pagination-type') || 'numbers';
-            const loadMoreText = this.$container.data('load-more-text') || 'Load More';
+    // Get settings from container
+    const postType = this.$container.data('post-type') || 'post';
+    const postsPerPage = this.$container.data('posts-per-page') || 6;
+    const layout = this.$container.data('layout') || 'grid';
+    const columns = this.$container.data('columns') || 3;
+    const paginationType = this.$container.data('pagination-type') || 'numbers';
+    const loadMoreText = this.$container.data('load-more-text') || 'Load More';
+    
+    // Get visibility settings from container
+    const showThumbnail = this.$container.data('show-thumbnail') || 'yes';
+    const showCategoryBadge = this.$container.data('show-category-badge') || 'yes';
+    const showTitle = this.$container.data('show-title') || 'yes';
+    const showExcerpt = this.$container.data('show-excerpt') || 'yes';
+    const showMeta = this.$container.data('show-meta') || 'yes';
+    const excerptLength = this.$container.data('excerpt-length') || 20;
+
+    // Check if ajax variables are available
+    if (typeof epfAjax === 'undefined') {
+        console.error('EPF: Ajax variables not loaded');
+        this.$loading.fadeOut(200);
+        return;
+    }
+
+    $.ajax({
+        url: epfAjax.ajax_url,
+        type: 'POST',
+        data: {
+            action: 'epf_filter_posts',
+            nonce: epfAjax.nonce,
+            category: this.filters.category,
+            tag: this.filters.tag,
+            post_type: postType,
+            posts_per_page: postsPerPage,
+            paged: this.paged,
+            layout: layout,
+            columns: columns,
+            pagination_type: paginationType,
+            load_more_text: loadMoreText,
+            is_load_more: false,
+            show_thumbnail: showThumbnail,
+            show_category_badge: showCategoryBadge,
+            show_title: showTitle,
+            show_excerpt: showExcerpt,
+            show_meta: showMeta,
+            excerpt_length: excerptLength
+        },
+        success: function(response) {
+            console.log('EPF: AJAX response received', response);
             
-            // Get visibility settings from container
-            const showThumbnail = this.$container.data('show-thumbnail') || 'yes';
-            const showCategoryBadge = this.$container.data('show-category-badge') || 'yes';
-            const showTitle = this.$container.data('show-title') || 'yes';
-            const showExcerpt = this.$container.data('show-excerpt') || 'yes';
-            const showMeta = this.$container.data('show-meta') || 'yes';
-            const excerptLength = this.$container.data('excerpt-length') || 20;
-
-            // Check if ajax variables are available
-            if (typeof epfAjax === 'undefined') {
-                console.error('EPF: Ajax variables not loaded');
-                this.$loading.fadeOut(200);
-                return;
-            }
-
-            $.ajax({
-                url: epfAjax.ajax_url,
-                type: 'POST',
-                data: {
-                    action: 'epf_filter_posts',
-                    nonce: epfAjax.nonce,
-                    category: this.filters.category,
-                    tag: this.filters.tag,
-                    post_type: postType,
-                    posts_per_page: postsPerPage,
-                    paged: this.paged,
-                    layout: layout,
-                    columns: columns,
-                    pagination_type: paginationType,
-                    load_more_text: loadMoreText,
-                    is_load_more: false,
-                    show_thumbnail: showThumbnail,
-                    show_category_badge: showCategoryBadge,
-                    show_title: showTitle,
-                    show_excerpt: showExcerpt,
-                    show_meta: showMeta,
-                    excerpt_length: excerptLength
-                },
-                success: function(response) {
-                    console.log('EPF: AJAX response received', response);
-                    
-                    if (response.success) {
-                        // Fade out old content
-                        self.$container.children(':not(.epf-loading)').fadeOut(200, function() {
-                            $(this).remove();
-                            
-                            // Insert new posts content
-                            $(response.html).hide().appendTo(self.$container).fadeIn(300);
-                            
-                            // Insert pagination if exists
-                            if (response.pagination) {
-                                $(response.pagination).hide().appendTo(self.$container).fadeIn(300);
-                            }
-                            
-                            // Hide loading
-                            self.$loading.fadeOut(200);
-                        });
-                    } else {
-                        console.error('EPF: Error in response', response);
-                        self.$loading.fadeOut(200);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('EPF: AJAX Error', {xhr: xhr, status: status, error: error});
-                    self.$loading.fadeOut(200);
-                    
-                    // Show error message to user
-                    alert('Error loading posts. Please try again.');
+            if (response.success) {
+                // Remove all existing content except loading indicator
+                self.$container.children(':not(.epf-loading)').remove();
+                
+                // Insert new posts content
+                $(response.html).hide().appendTo(self.$container).fadeIn(300);
+                
+                // Insert pagination if exists
+                if (response.pagination) {
+                    $(response.pagination).hide().appendTo(self.$container).fadeIn(300);
                 }
-            });
+                
+                // Hide loading
+                self.$loading.fadeOut(200);
+            } else {
+                console.error('EPF: Error in response', response);
+                self.$loading.fadeOut(200);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('EPF: AJAX Error', {xhr: xhr, status: status, error: error});
+            self.$loading.fadeOut(200);
+            
+            // Show error message to user
+            alert('Error loading posts. Please try again.');
         }
+    });
+}
     }
 
     // Store initialized instances
